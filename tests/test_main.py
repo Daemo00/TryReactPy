@@ -1,9 +1,9 @@
 import unittest
 
-from TryReactPy.main import add_one
+from TryReactPy.main import app
 
 
 class TestMain(unittest.TestCase):
 
-    def test_add_one(self):
-        self.assertEqual(add_one(5), 6)
+    def test_app(self):
+        self.assertIn("Hello", app().render()['children'][0])

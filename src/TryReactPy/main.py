@@ -1,6 +1,8 @@
 """Simple function."""
+from reactpy import component, html
 
 
-def add_one(number):
-    """Add 1 to `number`."""
-    return number + 1
+@component
+def app():
+    """Create the app."""
+    return html.h1("Hello, world!")

@@ -29,7 +29,7 @@ docs = [
 
 
 [project.scripts]
-add_number = "TryReactPy:cli.main"
+start = "TryReactPy:cli.main"
 
 
 [tool.setuptools_scm]

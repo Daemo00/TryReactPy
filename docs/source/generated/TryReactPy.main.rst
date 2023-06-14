@@ -1,17 +1,29 @@
 TryReactPy.main
-================
+===============
 
 .. automodule:: TryReactPy.main
 
+   
+   
+   
 
-
-
-
-
-
+   
+   
    .. rubric:: Functions
 
    .. autosummary::
+   
+      app
+   
+   
 
-      add_one
-      create_user
+   
+   
+   
+
+   
+   
+   
+
+
+
