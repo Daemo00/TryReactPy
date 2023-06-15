@@ -1,5 +1,86 @@
 """Simple function."""
-from reactpy import component, html
+import asyncio
+import json
+from pathlib import Path
+
+from reactpy import component, event, html, use_state
+
+HERE = Path(__file__)
+DATA_PATH = HERE.parent / "data" / "data.json"
+sculpture_data = json.loads(DATA_PATH.read_text())
+
+
+@component
+def chat():
+    """Chat.
+
+    State is a snapshot: Changing the recipient after clicking "Send"
+    does not change the recipient of the message because the state is
+    'snapshot' when the event is triggered.
+    """
+    recipient, set_recipient = use_state("Alice")
+    message, set_message = use_state("")
+
+    @event(prevent_default=True)
+    async def handle_submit(event):
+        set_message("")
+        print("About to send message...")
+        await asyncio.sleep(5)
+        print(f"Sent '{message}' to {recipient}")
+
+    return html.form(
+        {"on_submit": handle_submit, "style": {"display": "inline-grid"}},
+        html.label(
+            {},
+            "To: ",
+            html.select(
+                {
+                    "value": recipient,
+                    "on_change": lambda event: set_recipient(
+                        event["target"]["value"],
+                    ),
+                },
+                html.option({"value": "Alice"}, "Alice"),
+                html.option({"value": "Bob"}, "Bob"),
+            ),
+        ),
+        html.input(
+            {
+                "type": "text",
+                "placeholder": "Your message...",
+                "value": message,
+                "on_change": lambda event: set_message(
+                    event["target"]["value"],
+                ),
+            },
+        ),
+        html.button({"type": "submit"}, "Send"),
+    )
+
+
+@component
+def gallery():
+    """Manage state."""
+    index, set_index = use_state(0)
+
+    def handle_click(_event):
+        set_index(index + 1)
+
+    bounded_index = index % len(sculpture_data)
+    sculpture = sculpture_data[bounded_index]
+    alt = sculpture["alt"]
+    artist = sculpture["artist"]
+    description = sculpture["description"]
+    name = sculpture["name"]
+    url = sculpture["url"]
+
+    return html.div(
+        html.button({"on_click": handle_click}, "Next"),
+        html.h2(name, " by ", artist),
+        html.p(f"({bounded_index + 1} of {len(sculpture_data)})"),
+        html.img({"src": url, "alt": alt, "style": {"height": "200px"}}),
+        html.p(description),
+    )
 
 
 @component
@@ -63,6 +144,15 @@ def todo_list():
 
 
 @component
+def print_button(display_text, message_text):
+    """Manage simple event."""
+    def handle_event(_event):
+        print(message_text)
+
+    return html.button({"on_click": handle_event}, display_text)
+
+
+@component
 def app():
     """Create the app."""
     return html.div(
@@ -70,5 +160,8 @@ def app():
         photo("Landscape", image_id=830),
         photo("City", image_id=274),
         photo("Puppy", image_id=237),
+        print_button("Play", "Playing"),
         todo_list(),
+        gallery(),
+        chat(),
     )
