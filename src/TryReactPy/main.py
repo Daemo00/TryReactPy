@@ -22,7 +22,7 @@ def chat():
     message, set_message = use_state("")
 
     @event(prevent_default=True)
-    async def handle_submit(event):
+    async def handle_submit(_event):
         set_message("")
         print("About to send message...")
         await asyncio.sleep(5)
@@ -153,9 +153,65 @@ def print_button(display_text, message_text):
 
 
 @component
+def color_button():
+    """Multiple state updates.
+
+    State is updated 3 times but only the last one is applied.
+    """
+    color, set_color = use_state("gray")
+
+    def handle_click(_event):
+        set_color("orange")
+        set_color("pink")
+        set_color("blue")
+
+    def handle_reset(_event):
+        set_color("gray")
+
+    return html.div(
+        html.button(
+            {"on_click": handle_click, "style": {"background_color": color}},
+            "Set Color",
+        ),
+        html.button(
+            {
+                "on_click": handle_reset, "style": {
+                    "background_color": color,
+                },
+            }, "Reset",
+        ),
+    )
+
+
+@component
+def counter():
+    """Batched state updates.
+
+    State is updated 3 times, and they are all applied because we are
+    updating using an updater function.
+    """
+    number, set_number = use_state(0)
+
+    def increment(old_number):
+        new_number = old_number + 1
+        return new_number
+
+    def handle_click(_event):
+        set_number(increment)
+        set_number(increment)
+        set_number(increment)
+
+    return html.div(
+        html.h1(number),
+        html.button({"on_click": handle_click}, "Increment"),
+    )
+
+
+@component
 def app():
     """Create the app."""
     return html.div(
+        "Hello ReactPy!",
         html.h1("Photo Gallery"),
         photo("Landscape", image_id=830),
         photo("City", image_id=274),
@@ -164,4 +220,6 @@ def app():
         todo_list(),
         gallery(),
         chat(),
+        color_button(),
+        counter(),
     )
