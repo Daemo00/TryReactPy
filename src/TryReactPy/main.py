@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from reactpy import component, event, html, use_state
+from reactpy.core import hooks
 
 HERE = Path(__file__)
 DATA_PATH = HERE.parent / "data" / "data.json"
@@ -208,6 +209,133 @@ def counter():
 
 
 @component
+def mutability():
+    """Dangers of Mutability.
+
+    With mutable objects, changing it does not trigger a re-render
+    """
+    person, set_person = use_state(
+        {
+            "first_name": "Barbara",
+            "last_name": "Hepworth",
+            "email": "bhepworth@sculpture.com",
+        },
+    )
+
+    def handle_first_name_change(_event):
+        set_person({**person, "first_name": _event["target"]["value"]})
+
+    def handle_last_name_change(_event):
+        set_person({**person, "last_name": _event["target"]["value"]})
+
+    def handle_email_change(_event):
+        set_person({**person, "email": _event["target"]["value"]})
+
+    return html.div(
+        html.label(
+            "First name: ",
+            html.input(
+                {
+                    "value": person["first_name"],
+                    "on_change": handle_first_name_change,
+                },
+            ),
+        ),
+        html.label(
+            "Last name: ",
+            html.input(
+                {
+                    "value": person["last_name"],
+                    "on_change": handle_last_name_change,
+                },
+            ),
+        ),
+        html.label(
+            "Email: ",
+            html.input({
+                "value": person["email"],
+                "on_change": handle_email_change,
+            }),
+        ),
+        html.p(
+            f"{person['first_name']} {person['last_name']} {person['email']}",
+        ),
+    )
+
+
+@component
+def button_with_delay(message, delay):
+    """Async event management."""
+    async def handle_event(_event):
+        await asyncio.sleep(delay)
+        print(message)
+
+    return html.button(
+        {
+            "on_click": handle_event,
+            "title": f"Check the log in {delay} seconds",
+        }, message,
+    )
+
+
+@component
+def play_dinosaur_sound():
+    """When state is not serializable."""
+    _event, set_event = hooks.use_state(None)
+    return html.div(
+        html.audio(
+            {
+                "controls": True,
+                "on_time_update": set_event,
+                "src": "https://interactive-examples.mdn.mozilla.net/"
+                       "media/cc0-audio/t-rex-roar.mp3",
+            },
+        ),
+        html.pre(json.dumps(_event, indent=2)),
+    )
+
+
+@component
+def div_in_div():
+    """Stop propagation of events."""
+    stop_propagation, set_stop_propagation = hooks.use_state(True)
+    inner_count, set_inner_count = hooks.use_state(0)
+    outer_count, set_outer_count = hooks.use_state(0)
+
+    inner_div = html.div({
+        "on_click": event(
+            lambda _event: set_inner_count(inner_count + 1),
+            stop_propagation=stop_propagation, ),
+        "style": {
+            "height": "50px", "width": "50px",
+            "background_color": "blue", }, })
+    outer_div = html.div(
+        {
+            "on_click": lambda _event: set_outer_count(outer_count + 1),
+            "style": {
+                "height": "100px", "width": "100px", "background_color": "red",
+            },
+        },
+        inner_div,
+    )
+
+    return html.div(
+        html.button(
+            {
+                "on_click": lambda _event: set_stop_propagation(
+                    not stop_propagation,
+                ),
+            },
+            "Toggle Propagation",
+        ),
+        html.pre(f"Will propagate: {not stop_propagation}"),
+        html.pre(f"Inner click count: {inner_count}"),
+        html.pre(f"Outer click count: {outer_count}"),
+        outer_div,
+    )
+
+
+@component
 def app():
     """Create the app."""
     return html.div(
@@ -222,4 +350,8 @@ def app():
         chat(),
         color_button(),
         counter(),
+        mutability(),
+        button_with_delay("Hi", 2),
+        play_dinosaur_sound(),
+        div_in_div(),
     )
